@@ -1,33 +1,33 @@
-function [MEANrmse,MEANR2] = trfunct(extern,name)
+function [MEANrmse,MEANR2] = trfunct(extern,name,parameter)
     clc
 %   clear all
     close all
     % load data
     if strcmp(name, 'EPR')
-    load .\EPRExtension.txt;
-    load .\EPRLoad.txt;
-    load .\EPRRate.txt;
+    load EPRExtension;
+    load EPRLoad;
+    load EPRRate;
     Extension = EPRExtension;
     Rate = EPRRate;
     Load = EPRLoad;
     elseif strcmp(name, 'FR')
-    load .\FRExtension.txt;
-    load .\FRLoad.txt;
-    load .\FRRate.txt;
+    load FRExtension;
+    load FRLoad;
+    load FRRate;
     Extension = FRExtension;
     Rate = FRRate;
     Load = FRLoad;
     elseif strcmp(name, 'NR')
-    load .\NRExtension.txt;
-    load .\NRLoad.txt;
-    load .\NRRate.txt;
+    load NRExtension;
+    load NRLoad;
+    load NRRate;
     Extension = NRExtension;
     Rate = NRRate;
     Load = NRLoad;
     else 
-    load .\NATRExtension.txt;
-    load .\NATRLoad.txt;
-    load .\NATRRate.txt;
+    load NATRExtension;
+    load NATRLoad;
+    load NATRRate;
     Extension = NATRExtension;
     Rate = NATRRate;
     Load = NATRLoad;
@@ -57,21 +57,44 @@ function [MEANrmse,MEANR2] = trfunct(extern,name)
     trainsample.t(1,sizet+1:sizet+51*i) = zeros(1,3060); %load = 0
 
     % build a neural network with 2 hidden layers
-    net = feedforwardnet([12,6]);% 2-12-6-1
+    if parameter <=4
+        net = feedforwardnet([12,6]);% 2-12-6-1
+    else
+        net = feedforwardnet([10]);
+    end
     % divide the data again for BR
     net.divideParam.trainRatio = 0.9;
     net.divideParam.testRatio = 0.1;
     % Bayes Regulization
     net.trainFcn='trainbr';
     % set the activation function of hidden layers as sigmoid
+    if parameter == 1
+%     net.layers{1}.transferFcn = 'logsig';
+%     net.layers{2}.transferFcn = 'logsig';        
+    elseif parameter == 2
     net.layers{1}.transferFcn = 'logsig';
+%     net.layers{2}.transferFcn = 'logsig';        
+    elseif parameter == 3
+%     net.layers{1}.transferFcn = 'logsig';
+    net.layers{2}.transferFcn = 'logsig';            
+    elseif parameter == 4
+    net.layers{1}.transferFcn = 'logsig';
+    net.layers{2}.transferFcn = 'logsig';            
+    elseif parameter == 5
+%     net.layers{1}.transferFcn = 'logsig';
+%     net.layers{2}.transferFcn = 'logsig';            
+    else
+    net.layers{1}.transferFcn = 'logsig';
+%     net.layers{2}.transferFcn = 'logsig';        
+    end
+%     net.layers{1}.transferFcn = 'logsig';
 %     net.layers{2}.transferFcn = 'logsig';
     % net.layers{3}.transferFcn = 'logsig';
     % train the network
     [net,tr]=train(net,trainsample.p,trainsample.t);
     save('net','net');
     load('net');
-    copyfile('net.mat',strcat(name,'net',num2str(extern),'.mat'));
+    copyfile('net.mat',strcat(num2str(parameter),name,'net',num2str(extern),'.mat'));
     %RMSE
     A = validation.p(1,:);
     B = validation.p(2,:);
@@ -94,4 +117,7 @@ function [MEANrmse,MEANR2] = trfunct(extern,name)
     ssr = sum((f-y_mean).^2);
     MEANR2 = ssr/sst;
     MEANrmse = MEANrmse/mean(Load); 
+    save('1','MEANrmse','MEANR2')
+    clear all
+    load('1')
 end

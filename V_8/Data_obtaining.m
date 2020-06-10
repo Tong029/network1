@@ -4,6 +4,7 @@ clear all
 close all
 %get data
 delete *.txt
+delete *.mat
 name = {'EPR','FR','NR','NATR'};
 for i = 1:4
     whichfold = name{i};
